@@ -3,7 +3,6 @@ import {
   ConflictException,
   NotFoundException,
   UnauthorizedException,
-  Logger,
 } from '@nestjs/common';
 import { UserRepository } from './repositories/user.repository';
 import {
@@ -16,31 +15,36 @@ import {
 } from '@common/dto';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuthService } from './jwt/jwt.service';
+import { LoggerService } from '@core/logger';
 
 @Injectable()
 export class AuthenticationService {
-  private readonly logger = new Logger(AuthenticationService.name);
-
   constructor(
     private readonly userRepository: UserRepository,
     private readonly jwtAuthService: JwtAuthService,
-  ) {}
+    private readonly logger: LoggerService,
+  ) {
+    this.logger.setContext('AuthenticationService');
+  }
 
   async register(createUserDto: CreateUserDto): Promise<AuthResponseDto> {
-    this.logger.log(`Attempting to register user: ${createUserDto.email}`);
+    this.logger.info('Attempting to register user', { email: createUserDto.email });
 
     const existingUser = await this.userRepository.existsByEmail(
       createUserDto.email,
     );
 
     if (existingUser) {
-      this.logger.warn(`User already exists: ${createUserDto.email}`);
+      this.logger.warn('User already exists', { email: createUserDto.email });
       throw new ConflictException('User with this email already exists');
     }
 
     try {
       const user = await this.userRepository.create(createUserDto);
-      this.logger.log(`User registered successfully: ${user.email}`);
+      this.logger.info('User registered successfully', { 
+        userId: user._id.toString(),
+        email: user.email 
+      });
 
       const tokens = await this.jwtAuthService.generateTokens(
         user._id.toString(),
@@ -59,6 +63,10 @@ export class AuthenticationService {
         tokens,
       };
     } catch (error: any) {
+      this.logger.error('Registration failed', { 
+        email: createUserDto.email,
+        error: error.message 
+      });
       if (error.message === 'Email already exists') {
         throw new ConflictException('User with this email already exists');
       }
@@ -67,12 +75,12 @@ export class AuthenticationService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    this.logger.log(`Attempting to login user: ${loginDto.email}`);
+    this.logger.info('Attempting to login user', { email: loginDto.email });
 
     const user = await this.userRepository.findByEmail(loginDto.email);
 
     if (!user) {
-      this.logger.warn(`Login failed - user not found: ${loginDto.email}`);
+      this.logger.warn('Login failed - user not found', { email: loginDto.email });
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -81,11 +89,14 @@ export class AuthenticationService {
     );
 
     if (!isPasswordValid) {
-      this.logger.warn(`Login failed - invalid password: ${loginDto.email}`);
+      this.logger.warn('Login failed - invalid password', { email: loginDto.email });
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    this.logger.log(`User logged in successfully: ${user.email}`);
+    this.logger.info('User logged in successfully', { 
+      userId: user._id.toString(),
+      email: user.email 
+    });
 
     const tokens = await this.jwtAuthService.generateTokens(
       user._id.toString(),
@@ -106,7 +117,7 @@ export class AuthenticationService {
   }
 
   async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<TokensDto> {
-    this.logger.log('Attempting to refresh token');
+    this.logger.info('Attempting to refresh token');
 
     try {
       const payload =
@@ -122,22 +133,27 @@ export class AuthenticationService {
         throw new UnauthorizedException('User not found');
       }
 
-      this.logger.log(`Token refreshed successfully for user: ${user.email}`);
+      this.logger.info('Token refreshed successfully', { 
+        userId: user._id.toString(),
+        email: user.email 
+      });
 
       return await this.jwtAuthService.generateTokens(
         user._id.toString(),
         user.email,
       );
     } catch (error: any) {
-      this.logger.warn(`Token refresh failed: ${error.message}`);
+      this.logger.warn('Token refresh failed', { error: error.message });
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
   async findAll(): Promise<UserResponseDto[]> {
-    this.logger.log('Fetching all users');
+    this.logger.info('Fetching all users');
 
     const users = await this.userRepository.findAll();
+
+    this.logger.debug('Users fetched successfully', { count: users.length });
 
     return users.map((user) =>
       plainToInstance(UserResponseDto, {
@@ -150,12 +166,12 @@ export class AuthenticationService {
   }
 
   async findById(id: string): Promise<UserResponseDto> {
-    this.logger.log(`Fetching user by ID: ${id}`);
+    this.logger.info('Fetching user by ID', { userId: id });
 
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      this.logger.warn(`User not found: ${id}`);
+      this.logger.warn('User not found', { userId: id });
       throw new NotFoundException('User not found');
     }
 

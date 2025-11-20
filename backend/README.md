@@ -35,6 +35,8 @@ backend/
 - **Framework**: NestJS 11
 - **Database**: MongoDB with Mongoose
 - **Communication**: TCP Microservices (@nestjs/microservices)
+- **Authentication**: JWT (@nestjs/jwt, passport-jwt)
+- **Logging**: Winston with structured logging
 - **Validation**: class-validator, class-transformer
 - **Documentation**: Swagger/OpenAPI
 - **Package Manager**: Yarn
@@ -51,11 +53,27 @@ backend/
 # Install dependencies
 yarn install
 
-# Copy environment variables (create .env file manually)
-# MONGODB_URI=mongodb://localhost:27017/user-management
-# AUTH_SERVICE_HOST=localhost
-# AUTH_SERVICE_PORT=3001
-# GATEWAY_PORT=3000
+# Create .env file with these variables:
+# Database
+MONGODB_URI=mongodb://localhost:27017/user-management
+
+# Microservices
+AUTH_SERVICE_HOST=localhost
+AUTH_SERVICE_PORT=3001
+GATEWAY_PORT=3000
+
+# JWT Authentication
+JWT_SECRET=your-secret-key-change-in-production
+JWT_ACCESS_EXPIRY=15m
+JWT_REFRESH_EXPIRY=7d
+
+# CORS
+CORS_ORIGIN=http://localhost:3001
+
+# Logging
+LOG_LEVEL=info
+LOG_TO_FILE=false
+LOG_DIRECTORY=./logs
 ```
 
 ## Development
@@ -116,22 +134,76 @@ The Gateway service exposes the following endpoints on `http://localhost:3000`:
 
 ### Authentication
 
-- **POST /auth/register** - Register a new user
+- **POST /auth/register** - Register a new user (returns JWT tokens)
   ```json
+  // Request
   {
     "name": "John Doe",
     "email": "john@example.com",
     "password": "SecurePass123"
   }
+  
+  // Response
+  {
+    "user": {
+      "id": "...",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "createdAt": "2024-11-20T..."
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+    }
+  }
   ```
 
-- **GET /auth/users** - Get all users
-- **GET /auth/users/:id** - Get user by ID
+- **POST /auth/login** - Login with credentials
+  ```json
+  // Request
+  {
+    "email": "john@example.com",
+    "password": "SecurePass123"
+  }
+  
+  // Response (same as register)
+  {
+    "user": {...},
+    "tokens": {...}
+  }
+  ```
+
+- **POST /auth/refresh** - Refresh access token
+  ```json
+  // Request
+  {
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  }
+  
+  // Response
+  {
+    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  }
+  ```
+
+- **GET /auth/users** - Get all users (requires authentication)
+  ```bash
+  # Requires Authorization header
+  Authorization: Bearer <access_token>
+  ```
+
+- **GET /auth/users/:id** - Get user by ID (requires authentication)
+  ```bash
+  # Requires Authorization header
+  Authorization: Bearer <access_token>
+  ```
 
 ### Swagger Documentation
 
 Once the gateway is running, visit:
 - `http://localhost:3000/api` - Interactive API documentation with live testing
+- Includes JWT Bearer authentication testing
 
 ## Project Structure Details
 
@@ -161,17 +233,32 @@ Once the gateway is running, visit:
 
 Services communicate via TCP using message patterns:
 
-- `user.register` - Register new user
+- `user.register` - Register new user (returns user + tokens)
+- `user.login` - Authenticate user (returns user + tokens)
+- `user.refresh` - Refresh JWT tokens (returns new tokens)
 - `user.findAll` - Get all users
+- `user.findById` - Get user by ID
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| **Database** | | |
 | MONGODB_URI | MongoDB connection string | mongodb://localhost:27017/user-management |
+| **Microservices** | | |
 | AUTH_SERVICE_HOST | Authentication service host | localhost |
 | AUTH_SERVICE_PORT | Authentication service TCP port | 3001 |
 | GATEWAY_PORT | Gateway HTTP port | 3000 |
+| **JWT Authentication** | | |
+| JWT_SECRET | Secret key for JWT signing | your-secret-key |
+| JWT_ACCESS_EXPIRY | Access token expiration | 15m |
+| JWT_REFRESH_EXPIRY | Refresh token expiration | 7d |
+| **CORS** | | |
+| CORS_ORIGIN | Allowed frontend origins | http://localhost:3001 |
+| **Logging** | | |
+| LOG_LEVEL | Log level (error\|warn\|info\|debug\|verbose) | info |
+| LOG_TO_FILE | Enable file logging | false |
+| LOG_DIRECTORY | Directory for log files | ./logs |
 
 ## Development Workflow
 
@@ -182,18 +269,37 @@ Services communicate via TCP using message patterns:
 
 ## Features Implemented
 
+### Architecture
 - ✅ NestJS monorepo with gateway and authentication apps
 - ✅ TCP microservices communication
 - ✅ MongoDB integration with Mongoose
-- ✅ User registration with password hashing (bcrypt)
-- ✅ Email uniqueness validation
 - ✅ Repository pattern for data access
-- ✅ Global exception filters (HTTP and RPC)
-- ✅ Logging and transform interceptors
-- ✅ Global validation pipes
-- ✅ Swagger/OpenAPI documentation
 - ✅ Docker and docker-compose setup
+
+### Authentication & Security
+- ✅ JWT-based authentication with access + refresh tokens
+- ✅ User registration with password hashing (bcrypt)
+- ✅ Login with credential validation
+- ✅ Token refresh mechanism
+- ✅ JWT guards for protected routes
+- ✅ Email uniqueness validation
 - ✅ CORS configuration for frontend
+
+### Logging & Monitoring
+- ✅ Centralized Winston-based logging
+- ✅ Structured JSON logs with context
+- ✅ Request/response logging interceptor
+- ✅ Error tracking with stack traces
+- ✅ Environment-based log levels
+- ✅ Sensitive data redaction (passwords, tokens)
+- ✅ File logging support (production)
+
+### API & Documentation
+- ✅ Global exception filters (HTTP and RPC)
+- ✅ Transform interceptors
+- ✅ Global validation pipes
+- ✅ Swagger/OpenAPI documentation with JWT auth
+- ✅ RESTful API design
 
 ## Design Patterns Used
 
@@ -202,6 +308,61 @@ Services communicate via TCP using message patterns:
 - **Microservices Pattern**: Service decomposition via TCP
 - **Decorator Pattern**: Interceptors and filters
 - **Dependency Injection**: NestJS IoC container
+
+## Testing Authentication
+
+### Using cURL
+
+```bash
+# 1. Register a new user
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "test123"
+  }'
+
+# 2. Login
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "test123"
+  }'
+
+# 3. Access protected route (use access token from above)
+curl http://localhost:3000/auth/users \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+# 4. Refresh token (use refresh token from above)
+curl -X POST http://localhost:3000/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refreshToken": "YOUR_REFRESH_TOKEN"
+  }'
+```
+
+## Logging Examples
+
+The application logs structured information for debugging and monitoring:
+
+### Console Output (Development)
+```
+2024-11-20 17:30:45 info [AuthenticationService] User logged in { userId: '123', email: 'user@example.com' }
+2024-11-20 17:30:46 error [AuthenticationService] Login failed { email: 'user@example.com', error: 'Invalid credentials' }
+```
+
+### File Output (Production)
+When `LOG_TO_FILE=true`, logs are written to:
+- `logs/combined.log` - All logs in JSON format
+- `logs/error.log` - Only errors with stack traces
+
+## Documentation
+
+For detailed implementation guides:
+- **JWT Authentication**: See `/JWT_IMPLEMENTATION.md` in project root
+- **Centralized Logging**: See `/LOGGING_IMPLEMENTATION.md` in project root
 
 ## License
 

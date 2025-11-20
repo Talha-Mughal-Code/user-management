@@ -9,16 +9,18 @@ import { User, UserSchema } from '@common/entities';
 import { UserRepository } from './repositories/user.repository';
 import { JwtAuthService } from './jwt/jwt.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { databaseConfig, jwtConfig } from '@core/config';
+import { databaseConfig, jwtConfig, loggerConfig } from '@core/config';
 import { DatabaseModule } from '@core/database/database.module';
+import { LoggerModule } from '@core/logger';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig],
+      load: [databaseConfig, jwtConfig, loggerConfig],
     }),
     DatabaseModule,
+    LoggerModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({}),

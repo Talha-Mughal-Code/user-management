@@ -3,10 +3,6 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { GatewayModule } from './gateway.module';
 import {
-  AllExceptionsFilter,
-  HttpExceptionFilter,
-} from '@common/filters';
-import {
   LoggingInterceptor,
   TransformInterceptor,
 } from '@common/interceptors';
@@ -37,11 +33,6 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-
-  app.useGlobalFilters(
-    new AllExceptionsFilter(),
-    new HttpExceptionFilter(),
-  );
 
   app.useGlobalInterceptors(
     new LoggingInterceptor(),

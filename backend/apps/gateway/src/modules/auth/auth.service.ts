@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -9,24 +9,37 @@ import {
   TokensDto,
   UserResponseDto,
 } from '@common/dto';
+import { LoggerService } from '@core/logger';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
-
-  constructor(@Inject('AUTH_SERVICE') private readonly authClient: ClientProxy) {}
+  constructor(
+    @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
+    private readonly logger: LoggerService,
+  ) {
+    this.logger.setContext('AuthService');
+  }
 
   async register(createUserDto: CreateUserDto): Promise<AuthResponseDto> {
-    this.logger.log(`Forwarding registration request to auth service: ${createUserDto.email}`);
+    this.logger.info('Forwarding registration request to auth service', { 
+      email: createUserDto.email 
+    });
 
     try {
       const result = await firstValueFrom(
         this.authClient.send<AuthResponseDto>('user.register', createUserDto),
       );
-      this.logger.log(`User registered successfully: ${result.user.email}`);
+      this.logger.info('User registered successfully', { 
+        userId: result.user.id,
+        email: result.user.email 
+      });
       return result;
     } catch (error: any) {
-      this.logger.error(`Registration failed: ${error.message}`, error.stack);
+      this.logger.error('Registration failed', {
+        email: createUserDto.email,
+        error: error.message,
+        stack: error.stack,
+      });
       if (error.statusCode || error.status) {
         throw new HttpException(
           error.message || 'An error occurred',
@@ -38,16 +51,25 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    this.logger.log(`Forwarding login request to auth service: ${loginDto.email}`);
+    this.logger.info('Forwarding login request to auth service', { 
+      email: loginDto.email 
+    });
 
     try {
       const result = await firstValueFrom(
         this.authClient.send<AuthResponseDto>('user.login', loginDto),
       );
-      this.logger.log(`User logged in successfully: ${result.user.email}`);
+      this.logger.info('User logged in successfully', { 
+        userId: result.user.id,
+        email: result.user.email 
+      });
       return result;
     } catch (error: any) {
-      this.logger.error(`Login failed: ${error.message}`, error.stack);
+      this.logger.error('Login failed', {
+        email: loginDto.email,
+        error: error.message,
+        stack: error.stack,
+      });
       if (error.statusCode || error.status) {
         throw new HttpException(
           error.message || 'An error occurred',
@@ -59,16 +81,19 @@ export class AuthService {
   }
 
   async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<TokensDto> {
-    this.logger.log('Forwarding token refresh request to auth service');
+    this.logger.info('Forwarding token refresh request to auth service');
 
     try {
       const result = await firstValueFrom(
         this.authClient.send<TokensDto>('user.refresh', refreshTokenDto),
       );
-      this.logger.log('Token refreshed successfully');
+      this.logger.info('Token refreshed successfully');
       return result;
     } catch (error: any) {
-      this.logger.error(`Token refresh failed: ${error.message}`, error.stack);
+      this.logger.error('Token refresh failed', {
+        error: error.message,
+        stack: error.stack,
+      });
       if (error.statusCode || error.status) {
         throw new HttpException(
           error.message || 'An error occurred',
@@ -80,31 +105,43 @@ export class AuthService {
   }
 
   async findAll(): Promise<UserResponseDto[]> {
-    this.logger.log('Forwarding find all users request to auth service');
+    this.logger.info('Forwarding find all users request to auth service');
 
     try {
       const result = await firstValueFrom(
         this.authClient.send<UserResponseDto[]>('user.findAll', {}),
       );
-      this.logger.log(`Retrieved ${result.length} users`);
+      this.logger.info('Retrieved users successfully', { count: result.length });
       return result;
-    } catch (error) {
-      this.logger.error(`Failed to fetch users: ${error.message}`, error.stack);
+    } catch (error: any) {
+      this.logger.error('Failed to fetch users', {
+        error: error.message,
+        stack: error.stack,
+      });
       throw error;
     }
   }
 
   async findById(id: string): Promise<UserResponseDto> {
-    this.logger.log(`Forwarding find user by ID request to auth service: ${id}`);
+    this.logger.info('Forwarding find user by ID request to auth service', { 
+      userId: id 
+    });
 
     try {
       const result = await firstValueFrom(
         this.authClient.send<UserResponseDto>('user.findById', id),
       );
-      this.logger.log(`User retrieved successfully: ${result.email}`);
+      this.logger.info('User retrieved successfully', { 
+        userId: result.id,
+        email: result.email 
+      });
       return result;
-    } catch (error) {
-      this.logger.error(`Failed to fetch user: ${error.message}`, error.stack);
+    } catch (error: any) {
+      this.logger.error('Failed to fetch user', {
+        userId: id,
+        error: error.message,
+        stack: error.stack,
+      });
       throw error;
     }
   }

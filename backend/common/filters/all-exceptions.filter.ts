@@ -4,13 +4,17 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
+  Injectable,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { LoggerService } from '@core/logger';
 
 @Catch()
+@Injectable()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
+  constructor(private readonly logger: LoggerService) {
+    this.logger.setContext('AllExceptionsFilter');
+  }
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -43,10 +47,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error,
     };
 
-    this.logger.error(
-      `Unhandled Exception: ${request.method} ${request.url}`,
-      exception instanceof Error ? exception.stack : JSON.stringify(exception),
-    );
+    this.logger.error(`Unhandled Exception: ${request.method} ${request.url}`, {
+      statusCode: status,
+      path: request.url,
+      method: request.method,
+      error: message,
+      stack: exception instanceof Error ? exception.stack : undefined,
+      exception: typeof exception === 'object' ? exception : String(exception),
+    });
 
     response.status(status).json(errorResponse);
   }
