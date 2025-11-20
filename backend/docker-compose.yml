@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: user-management-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: user-management
+
+  authentication:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-management-auth
+    restart: unless-stopped
+    command: node dist/apps/authentication/main
+    depends_on:
+      - mongodb
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/user-management
+      AUTH_SERVICE_HOST: 0.0.0.0
+      AUTH_SERVICE_PORT: 3001
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-management-gateway
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mongodb
+      - authentication
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/user-management
+      AUTH_SERVICE_HOST: authentication
+      AUTH_SERVICE_PORT: 3001
+      GATEWAY_PORT: 3000
+
+volumes:
+  mongodb_data:
