@@ -8,9 +8,6 @@ export default function Home() {
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
             User Management System
           </h1>
-          <p className="text-xl text-gray-600">
-            A modern full-stack application built with NestJS and Next.js
-          </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
@@ -99,10 +96,6 @@ export default function Home() {
               </svg>
             </div>
           </Link>
-        </div>
-
-        <div className="mt-12 text-center text-sm text-gray-500">
-          <p>Built with NestJS microservices, MongoDB, Next.js 16, and TailwindCSS</p>
         </div>
       </div>
     </div>

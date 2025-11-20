@@ -28,8 +28,8 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
           id={inputId}
           ref={ref}
           className={cn(
-            'flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm',
-            'placeholder:text-gray-400',
+            'flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black',
+            'placeholder:text-black placeholder:opacity-60',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
             'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50',
             hasError && 'border-red-500 focus:ring-red-500',

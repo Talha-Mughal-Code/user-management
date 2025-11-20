@@ -38,10 +38,14 @@ export default function RegisterPage() {
       return true;
     } catch (error: any) {
       const validationErrors: Partial<Record<keyof RegisterFormData, string>> = {};
-      error.errors?.forEach((err: any) => {
-        const path = err.path[0] as keyof RegisterFormData;
-        validationErrors[path] = err.message;
-      });
+      if (error.issues) {
+        error.issues.forEach((issue: any) => {
+          const path = issue.path[0] as keyof RegisterFormData;
+          if (path) {
+            validationErrors[path] = issue.message;
+          }
+        });
+      }
       setErrors(validationErrors);
       return false;
     }
@@ -63,7 +67,13 @@ export default function RegisterPage() {
       setFormData({ name: '', email: '', password: '' });
     } catch (error) {
       if (error instanceof ApiClientError) {
-        setApiError(error.message);
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes('email') && errorMessage.includes('already')) {
+          setErrors((prev) => ({ ...prev, email: 'This email is already registered' }));
+          setApiError('');
+        } else {
+          setApiError(error.message);
+        }
       } else {
         setApiError('An unexpected error occurred. Please try again.');
       }

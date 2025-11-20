@@ -1,5 +1,5 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { Injectable, Inject, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { CreateUserDto, UserResponseDto } from '@common/dto';
 
@@ -18,8 +18,14 @@ export class AuthService {
       );
       this.logger.log(`User registered successfully: ${result.email}`);
       return result;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Registration failed: ${error.message}`, error.stack);
+      if (error.statusCode || error.status) {
+        throw new HttpException(
+          error.message || 'An error occurred',
+          error.statusCode || error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
       throw error;
     }
   }

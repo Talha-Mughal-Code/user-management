@@ -26,15 +26,22 @@ export class AuthenticationService {
       throw new ConflictException('User with this email already exists');
     }
 
-    const user = await this.userRepository.create(createUserDto);
-    this.logger.log(`User registered successfully: ${user.email}`);
+    try {
+      const user = await this.userRepository.create(createUserDto);
+      this.logger.log(`User registered successfully: ${user.email}`);
 
-    return plainToInstance(UserResponseDto, {
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt,
-    });
+      return plainToInstance(UserResponseDto, {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+      });
+    } catch (error: any) {
+      if (error.message === 'Email already exists') {
+        throw new ConflictException('User with this email already exists');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<UserResponseDto[]> {

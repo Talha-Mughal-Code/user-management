@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthenticationService } from './authentication.service';
 import { CreateUserDto, UserResponseDto } from '@common/dto';
 
@@ -11,7 +11,22 @@ export class AuthenticationController {
   async register(
     @Payload() createUserDto: CreateUserDto,
   ): Promise<UserResponseDto> {
-    return this.authenticationService.register(createUserDto);
+    try {
+      return await this.authenticationService.register(createUserDto);
+    } catch (error: any) {
+      if (error.status === 409 || error.statusCode === 409) {
+        throw new RpcException({
+          statusCode: 409,
+          message: error.message || 'User with this email already exists',
+          error: 'Conflict',
+        });
+      }
+      throw new RpcException({
+        statusCode: error.status || error.statusCode || 500,
+        message: error.message || 'Internal server error',
+        error: error.error || 'InternalServerError',
+      });
+    }
   }
 
   @MessagePattern('user.findAll')
@@ -21,6 +36,14 @@ export class AuthenticationController {
 
   @MessagePattern('user.findById')
   async findById(@Payload() id: string): Promise<UserResponseDto> {
-    return this.authenticationService.findById(id);
+    try {
+      return await this.authenticationService.findById(id);
+    } catch (error: any) {
+      throw new RpcException({
+        statusCode: error.status || error.statusCode || 500,
+        message: error.message || 'Internal server error',
+        error: error.error || 'InternalServerError',
+      });
+    }
   }
 }

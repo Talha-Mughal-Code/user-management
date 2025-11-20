@@ -15,9 +15,27 @@ async function bootstrap() {
   const logger = new Logger('Gateway');
   const app = await NestFactory.create(GatewayModule);
 
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+    : [];
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin || isDevelopment) {
+        const localhostRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+        if (localhostRegex.test(origin || '')) {
+          return callback(null, true);
+        }
+      }
+      if (allowedOrigins.length > 0 && origin && allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(null, isDevelopment);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.useGlobalFilters(

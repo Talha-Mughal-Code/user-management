@@ -11,8 +11,15 @@ export class UserRepository {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const user = new this.userModel(createUserDto);
-    return user.save();
+    try {
+      const user = new this.userModel(createUserDto);
+      return await user.save();
+    } catch (error: any) {
+      if (error.code === 11000) {
+        throw new Error('Email already exists');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<UserDocument[]> {
