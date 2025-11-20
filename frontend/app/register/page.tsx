@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, InputField, Modal } from '@/components/ui';
+import { Button, InputField, Modal, ThemeToggle } from '@/components/ui';
 import { authApi, ApiClientError } from '@/lib/api';
 import { registerSchema, RegisterFormData } from '@/lib/validations/auth';
 import { useAuth } from '@/lib/contexts';
@@ -91,12 +91,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Create Account</h1>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Join us today and get started
             </p>
           </div>
@@ -104,7 +108,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {apiError && (
               <div
-                className="rounded-md bg-red-50 border border-red-200 p-4"
+                className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4"
                 role="alert"
               >
                 <div className="flex">
@@ -124,7 +128,7 @@ export default function RegisterPage() {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-red-800">{apiError}</p>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">{apiError}</p>
                   </div>
                 </div>
               </div>
@@ -179,11 +183,11 @@ export default function RegisterPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
               <a
                 href="/login"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
               >
                 Sign In
               </a>
@@ -219,7 +223,7 @@ export default function RegisterPage() {
           <p className="text-lg font-medium text-gray-900 mb-2">
             Account created successfully!
           </p>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
             You have been registered. Redirecting to users list...
           </p>
           <Button onClick={handleSuccessModalClose} variant="primary" className="w-full">

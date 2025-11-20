@@ -57,17 +57,17 @@ export default function UsersListClient() {
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
-            className="animate-pulse bg-white rounded-lg shadow-md p-6"
+            className="animate-pulse bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
           >
             <div className="flex items-center space-x-4">
-              <div className="rounded-full bg-gray-300 h-12 w-12" />
+              <div className="rounded-full bg-gray-300 dark:bg-gray-600 h-12 w-12" />
               <div className="flex-1 space-y-3">
-                <div className="h-4 bg-gray-300 rounded w-3/4" />
-                <div className="h-3 bg-gray-300 rounded w-1/2" />
+                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4" />
+                <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2" />
               </div>
             </div>
             <div className="mt-4 space-y-2">
-              <div className="h-3 bg-gray-300 rounded" />
+              <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded" />
             </div>
           </div>
         ))}
@@ -101,7 +101,7 @@ export default function UsersListClient() {
             placeholder="Search users by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500 dark:placeholder:text-gray-400"
             aria-label="Search users"
           />
         </div>
@@ -122,7 +122,7 @@ export default function UsersListClient() {
 
       {error && (
         <div
-          className="mb-6 rounded-md bg-red-50 border border-red-200 p-4"
+          className="mb-6 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4"
           role="alert"
         >
           <div className="flex">
@@ -141,16 +141,16 @@ export default function UsersListClient() {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-red-800">{error}</p>
+              <p className="text-sm font-medium text-red-800 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
       )}
 
       {filteredUsers.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-md">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
           <svg
-            className="mx-auto h-12 w-12 text-gray-400"
+            className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -162,10 +162,10 @@ export default function UsersListClient() {
               d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             {searchQuery ? 'No users found' : 'No users yet'}
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {searchQuery
               ? 'Try adjusting your search query'
               : 'Get started by creating a new user'}
@@ -180,7 +180,7 @@ export default function UsersListClient() {
         </div>
       ) : (
         <>
-          <div className="mb-4 text-sm text-gray-600">
+          <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
             Showing {filteredUsers.length} of {users.length} user(s)
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -196,18 +196,18 @@ export default function UsersListClient() {
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {user.name}
                       </h3>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                     </div>
                   </div>
                 </CardHeader>
                 <CardBody>
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       <svg
-                        className="mr-2 h-4 w-4 text-gray-400"
+                        className="mr-2 h-4 w-4 text-gray-400 dark:text-gray-500"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -222,9 +222,9 @@ export default function UsersListClient() {
                       </svg>
                       {user.email}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       <svg
-                        className="mr-2 h-4 w-4 text-gray-400"
+                        className="mr-2 h-4 w-4 text-gray-400 dark:text-gray-500"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -246,7 +246,7 @@ export default function UsersListClient() {
                     <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
                       Active
                     </span>
-                    <span className="text-xs text-gray-500">ID: {user.id.slice(0, 8)}...</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">ID: {user.id.slice(0, 8)}...</span>
                   </div>
                 </CardFooter>
               </Card>

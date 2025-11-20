@@ -99,7 +99,7 @@ export const Modal = ({
       aria-labelledby={title ? 'modal-title' : undefined}
     >
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -107,17 +107,17 @@ export const Modal = ({
       <div
         ref={modalRef}
         className={cn(
-          'relative z-10 w-full rounded-lg bg-white shadow-xl',
+          'relative z-10 w-full rounded-lg bg-white dark:bg-gray-800 shadow-xl',
           'mx-4 my-8 max-h-[90vh] overflow-y-auto',
           sizeClasses[size]
         )}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             {title && (
               <h2
                 id="modal-title"
-                className="text-lg font-semibold text-gray-900"
+                className="text-lg font-semibold text-gray-900 dark:text-gray-100"
               >
                 {title}
               </h2>
@@ -126,7 +126,7 @@ export const Modal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 aria-label="Close modal"
               >
                 <svg

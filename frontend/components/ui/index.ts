@@ -3,4 +3,5 @@ export * from './InputField';
 export * from './Modal';
 export * from './Tabs';
 export * from './Card';
+export * from './ThemeToggle';
 

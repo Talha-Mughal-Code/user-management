@@ -89,8 +89,8 @@ export const Tabs = ({
         role="tablist"
         className={cn(
           'flex',
-          variant === 'default' && 'border-b border-gray-200',
-          variant === 'pills' && 'gap-2 rounded-lg bg-gray-100 p-1'
+          variant === 'default' && 'border-b border-gray-200 dark:border-gray-700',
+          variant === 'pills' && 'gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 p-1'
         )}
       >
         {tabs.map((tab, index) => (
@@ -106,21 +106,21 @@ export const Tabs = ({
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={cn(
               'px-4 py-2 text-sm font-medium transition-colors',
-              'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+              'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900',
               'disabled:cursor-not-allowed disabled:opacity-50',
               variant === 'default' &&
                 cn(
                   'border-b-2 border-transparent',
                   activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'text-gray-600 hover:border-gray-300 hover:text-gray-900'
+                    ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                    : 'text-gray-600 hover:border-gray-300 hover:text-gray-900 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200'
                 ),
               variant === 'pills' &&
                 cn(
                   'rounded-md',
                   activeTab === tab.id
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
+                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
                 )
             )}
           >

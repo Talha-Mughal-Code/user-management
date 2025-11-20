@@ -18,7 +18,7 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="mb-2 block text-sm font-medium text-gray-700"
+            className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200"
           >
             {label}
             {props.required && <span className="ml-1 text-red-500" aria-label="required">*</span>}
@@ -29,10 +29,11 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
           ref={ref}
           className={cn(
             'flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black',
-            'placeholder:text-black placeholder:opacity-60',
+            'dark:border-gray-600 dark:bg-gray-800 dark:text-white',
+            'placeholder:text-black placeholder:opacity-60 dark:placeholder:text-white dark:placeholder:opacity-50',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50',
-            hasError && 'border-red-500 focus:ring-red-500',
+            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-900',
+            hasError && 'border-red-500 focus:ring-red-500 dark:border-red-400',
             className
           )}
           aria-invalid={hasError}
@@ -44,7 +45,7 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
         {error && (
           <p
             id={`${inputId}-error`}
-            className="mt-1 text-sm text-red-600"
+            className="mt-1 text-sm text-red-600 dark:text-red-400"
             role="alert"
           >
             {error}
@@ -53,7 +54,7 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
         {!error && helperText && (
           <p
             id={`${inputId}-helper`}
-            className="mt-1 text-sm text-gray-500"
+            className="mt-1 text-sm text-gray-500 dark:text-gray-400"
           >
             {helperText}
           </p>
