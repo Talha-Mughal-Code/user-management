@@ -30,6 +30,11 @@ This project consists of two main parts:
   - Error tracking with stack traces
   - Environment-based log levels
   - Sensitive data redaction
+- ✅ **Testing**
+  - E2E tests for complete auth flows
+  - Integration tests for protected routes
+  - Comprehensive error scenario coverage
+  - Test coverage reporting
 - ✅ **API & Documentation**
   - RESTful API with Swagger/OpenAPI
   - Email uniqueness validation
@@ -275,15 +280,53 @@ frontend/
 
 ## Testing
 
-### Backend
+### Backend Tests
+
+#### Unit Tests
 ```bash
 cd backend
-yarn test              # Unit tests
-yarn test:e2e         # E2E tests
-yarn test:cov         # Coverage report
+
+yarn test
+
+yarn test:watch
+
+yarn test:cov
+
+yarn test authentication.service.spec
 ```
 
-### Frontend
+**Unit Test Coverage**:
+- ✅ AuthenticationService (register, login, refresh, user operations)
+- ✅ JwtAuthService (token generation, verification)
+- ✅ Comprehensive error handling tests
+
+#### E2E Tests
+```bash
+cd backend
+
+yarn test:e2e
+
+yarn test:e2e auth.e2e-spec.ts
+```
+
+**E2E Test Coverage**:
+- ✅ Complete authentication flow (register → login → users)
+- ✅ Token refresh mechanism
+- ✅ Protected routes with JWT guards
+- ✅ Error handling (validation, unauthorized, not found)
+- ✅ Integration with microservices
+
+**Setup for E2E Tests**:
+1. Ensure MongoDB is running (or use Docker Compose)
+2. Start authentication microservice: `yarn start:authentication`
+3. Run E2E tests in separate terminal: `yarn test:e2e`
+
+**Test Files**:
+- `apps/authentication/src/authentication.service.spec.ts` - Unit tests
+- `apps/authentication/src/jwt/jwt.service.spec.ts` - JWT unit tests
+- `apps/gateway/test/auth.e2e-spec.ts` - Complete auth flow E2E tests
+
+### Frontend Tests
 ```bash
 cd frontend
 yarn lint             # ESLint
@@ -445,14 +488,27 @@ yarn start
   - Type-safe API client
   - Error boundary implementation
 
-## Documentation
+## Testing
 
-For detailed implementation guides:
-- **JWT Authentication**: See `JWT_IMPLEMENTATION.md`
-- **Centralized Logging**: See `LOGGING_IMPLEMENTATION.md`
-- **Backend Details**: See `/backend/README.md`
-- **Frontend Details**: See `/frontend/README.md`
-- **Setup Guide**: See `SETUP.md`
+### Quick Start
+
+**Backend Tests**:
+```bash
+cd backend
+
+yarn test
+
+yarn start:authentication  # Terminal 1
+yarn test:e2e             # Terminal 2
+
+yarn test:cov
+```
+
+**Test Coverage**:
+- ✅ Unit tests: AuthenticationService, JwtAuthService
+- ✅ E2E tests: Complete auth flow, protected routes, error handling
+- ✅ Integration tests: Register → Login → Users → Refresh flow
+
 
 ## Key Implementation Highlights
 

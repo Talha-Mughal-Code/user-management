@@ -117,6 +117,17 @@ yarn lint
 yarn build
 ```
 
+## Testing
+
+**Note**: Frontend unit tests (Phase 5) will be implemented with Vitest and React Testing Library.
+
+**Planned Test Coverage**:
+- ✅ UI Component tests (Button, InputField, Modal, Tabs, Card)
+- ✅ Authentication flow tests
+- ✅ Form validation tests
+- ✅ Protected route tests
+- ✅ API integration tests
+
 ## Pages
 
 ### Home (/)
@@ -178,6 +189,13 @@ yarn build
 - ✅ Automatic token attachment to requests
 - ✅ Token refresh on 401 responses
 - ✅ ESLint configured
+
+### Testing
+- 🔄 Frontend tests (Phase 5 - Planned)
+  - Unit tests for UI components
+  - Authentication flow tests
+  - Form validation tests
+  - Protected route tests
 
 ## Design Patterns
 

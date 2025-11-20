@@ -124,8 +124,9 @@ yarn format                 # Format code with Prettier
 
 # Testing
 yarn test                   # Run unit tests
-yarn test:e2e              # Run e2e tests
+yarn test:watch            # Run tests in watch mode
 yarn test:cov              # Generate coverage report
+yarn test:e2e              # Run e2e tests
 ```
 
 ## API Endpoints
@@ -294,6 +295,14 @@ Services communicate via TCP using message patterns:
 - ✅ Sensitive data redaction (passwords, tokens)
 - ✅ File logging support (production)
 
+### Testing
+- ✅ Unit tests for AuthenticationService
+- ✅ Unit tests for JwtAuthService
+- ✅ E2E tests for complete auth flow
+- ✅ E2E tests for protected routes
+- ✅ Comprehensive error scenario coverage
+- ✅ Test coverage reporting
+
 ### API & Documentation
 - ✅ Global exception filters (HTTP and RPC)
 - ✅ Transform interceptors
@@ -358,11 +367,105 @@ When `LOG_TO_FILE=true`, logs are written to:
 - `logs/combined.log` - All logs in JSON format
 - `logs/error.log` - Only errors with stack traces
 
-## Documentation
+## Testing
 
-For detailed implementation guides:
-- **JWT Authentication**: See `/JWT_IMPLEMENTATION.md` in project root
-- **Centralized Logging**: See `/LOGGING_IMPLEMENTATION.md` in project root
+### Unit Tests
+
+Unit tests test individual services and components in isolation:
+
+```bash
+yarn test
+
+yarn test:watch
+
+yarn test:cov
+```
+
+**Test Coverage**:
+- ✅ **AuthenticationService**: Registration, login, token refresh, user operations
+- ✅ **JwtAuthService**: Token generation, verification, configuration
+- ✅ **Error Handling**: Conflict, unauthorized, not found scenarios
+
+**Test Files**:
+- `apps/authentication/src/authentication.service.spec.ts` - Service unit tests
+- `apps/authentication/src/jwt/jwt.service.spec.ts` - JWT service tests
+
+### E2E Tests
+
+End-to-end tests test complete flows including database and microservice communication:
+
+```bash
+# Run E2E tests (requires services running)
+yarn test:e2e
+
+# Run specific E2E test
+yarn test:e2e auth.e2e-spec.ts
+```
+
+**Prerequisites**:
+1. MongoDB running (or Docker Compose)
+2. Authentication service running: `yarn start:authentication`
+3. Optional: Create `.env.test` for test-specific configuration
+
+**E2E Test Coverage**:
+- ✅ User registration flow
+- ✅ User login flow
+- ✅ Token refresh flow
+- ✅ Protected routes with JWT guards
+- ✅ Complete integration flow (register → login → users → refresh)
+- ✅ Error handling (validation, unauthorized, not found)
+
+**Test Files**:
+- `apps/gateway/test/auth.e2e-spec.ts` - Complete auth flow tests
+- `apps/gateway/test/app.e2e-spec.ts` - Basic gateway tests
+
+### Test Configuration
+
+**Unit Tests** (`package.json`):
+- Uses Jest with TypeScript support
+- Path mappings for `@common` and `@core` imports
+- Coverage collection enabled
+
+**E2E Tests** (`apps/gateway/test/jest-e2e.json`):
+- Separate Jest configuration for E2E
+- Path mappings configured
+- Setup file for environment variables
+
+### Test Environment Setup
+
+Create optional `.env.test` in backend root:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/user-management-test
+AUTH_SERVICE_HOST=localhost
+AUTH_SERVICE_PORT=3001
+GATEWAY_PORT=3000
+JWT_SECRET=test-secret-key
+LOG_LEVEL=error
+```
+
+### Example Test Run
+
+```bash
+$ yarn test
+
+PASS  apps/authentication/src/authentication.service.spec.ts
+  AuthenticationService
+    register
+      ✓ should register a new user successfully
+      ✓ should throw ConflictException if user already exists
+    login
+      ✓ should login user successfully
+      ✓ should throw UnauthorizedException if user not found
+    refreshToken
+      ✓ should refresh token successfully
+      ...
+
+Test Suites: 2 passed, 2 total
+Tests:       16 passed, 16 total
+```
+
+For comprehensive testing documentation, see `/backend/TESTING.md`
 
 ## License
 
