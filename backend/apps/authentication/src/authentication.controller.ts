@@ -1,7 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthenticationService } from './authentication.service';
-import { CreateUserDto, UserResponseDto } from '@common/dto';
+import {
+  CreateUserDto,
+  AuthResponseDto,
+  LoginDto,
+  RefreshTokenDto,
+  TokensDto,
+  UserResponseDto,
+} from '@common/dto';
 
 @Controller()
 export class AuthenticationController {
@@ -10,7 +17,7 @@ export class AuthenticationController {
   @MessagePattern('user.register')
   async register(
     @Payload() createUserDto: CreateUserDto,
-  ): Promise<UserResponseDto> {
+  ): Promise<AuthResponseDto> {
     try {
       return await this.authenticationService.register(createUserDto);
     } catch (error: any) {
@@ -21,6 +28,34 @@ export class AuthenticationController {
           error: 'Conflict',
         });
       }
+      throw new RpcException({
+        statusCode: error.status || error.statusCode || 500,
+        message: error.message || 'Internal server error',
+        error: error.error || 'InternalServerError',
+      });
+    }
+  }
+
+  @MessagePattern('user.login')
+  async login(@Payload() loginDto: LoginDto): Promise<AuthResponseDto> {
+    try {
+      return await this.authenticationService.login(loginDto);
+    } catch (error: any) {
+      throw new RpcException({
+        statusCode: error.status || error.statusCode || 500,
+        message: error.message || 'Internal server error',
+        error: error.error || 'InternalServerError',
+      });
+    }
+  }
+
+  @MessagePattern('user.refresh')
+  async refreshToken(
+    @Payload() refreshTokenDto: RefreshTokenDto,
+  ): Promise<TokensDto> {
+    try {
+      return await this.authenticationService.refreshToken(refreshTokenDto);
+    } catch (error: any) {
       throw new RpcException({
         statusCode: error.status || error.statusCode || 500,
         message: error.message || 'Internal server error',

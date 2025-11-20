@@ -2,32 +2,36 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, InputField, Modal } from '@/components/ui';
+import { Button, InputField } from '@/components/ui';
 import { authApi, ApiClientError } from '@/lib/api';
-import { registerSchema, RegisterFormData } from '@/lib/validations/auth';
+import { loginSchema, LoginFormData } from '@/lib/validations/auth';
 import { useAuth } from '@/lib/contexts';
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
-  const [formData, setFormData] = React.useState<RegisterFormData>({
-    name: '',
+  const { login: authLogin, isAuthenticated } = useAuth();
+  const [formData, setFormData] = React.useState<LoginFormData>({
     email: '',
     password: '',
   });
-  const [errors, setErrors] = React.useState<Partial<Record<keyof RegisterFormData, string>>>({});
+  const [errors, setErrors] = React.useState<Partial<Record<keyof LoginFormData, string>>>({});
   const [isLoading, setIsLoading] = React.useState(false);
-  const [showSuccessModal, setShowSuccessModal] = React.useState(false);
   const [apiError, setApiError] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/users');
+    }
+  }, [isAuthenticated, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (errors[name as keyof RegisterFormData]) {
+    if (errors[name as keyof LoginFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
-    
+
     if (apiError) {
       setApiError('');
     }
@@ -35,14 +39,14 @@ export default function RegisterPage() {
 
   const validateForm = (): boolean => {
     try {
-      registerSchema.parse(formData);
+      loginSchema.parse(formData);
       setErrors({});
       return true;
     } catch (error: any) {
-      const validationErrors: Partial<Record<keyof RegisterFormData, string>> = {};
+      const validationErrors: Partial<Record<keyof LoginFormData, string>> = {};
       if (error.issues) {
         error.issues.forEach((issue: any) => {
-          const path = issue.path[0] as keyof RegisterFormData;
+          const path = issue.path[0] as keyof LoginFormData;
           if (path) {
             validationErrors[path] = issue.message;
           }
@@ -64,16 +68,13 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const response = await authApi.register(formData);
-      login(response.user, response.tokens);
-      setShowSuccessModal(true);
-      setFormData({ name: '', email: '', password: '' });
+      const response = await authApi.login(formData);
+      authLogin(response.user, response.tokens);
+      router.push('/users');
     } catch (error) {
       if (error instanceof ApiClientError) {
-        const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes('email') && errorMessage.includes('already')) {
-          setErrors((prev) => ({ ...prev, email: 'This email is already registered' }));
-          setApiError('');
+        if (error.statusCode === 401) {
+          setApiError('Invalid email or password');
         } else {
           setApiError(error.message);
         }
@@ -85,19 +86,14 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSuccessModalClose = () => {
-    setShowSuccessModal(false);
-    router.push('/users');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-xl p-8">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
             <p className="mt-2 text-sm text-gray-600">
-              Join us today and get started
+              Sign in to your account to continue
             </p>
           </div>
 
@@ -131,18 +127,6 @@ export default function RegisterPage() {
             )}
 
             <InputField
-              label="Full Name"
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              error={errors.name}
-              placeholder="John Doe"
-              required
-              disabled={isLoading}
-            />
-
-            <InputField
               label="Email Address"
               name="email"
               type="email"
@@ -161,7 +145,6 @@ export default function RegisterPage() {
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
-              helperText="Must be at least 6 characters"
               placeholder="••••••••"
               required
               disabled={isLoading}
@@ -174,59 +157,23 @@ export default function RegisterPage() {
               isLoading={isLoading}
               className="w-full"
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
+              Don&apos;t have an account?{' '}
               <a
-                href="/login"
+                href="/register"
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                Sign In
+                Create Account
               </a>
             </p>
           </div>
         </div>
       </div>
-
-      <Modal
-        isOpen={showSuccessModal}
-        onClose={handleSuccessModalClose}
-        title="Success!"
-        size="sm"
-      >
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-            <svg
-              className="h-6 w-6 text-green-600"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <p className="text-lg font-medium text-gray-900 mb-2">
-            Account created successfully!
-          </p>
-          <p className="text-sm text-gray-600 mb-6">
-            You have been registered. Redirecting to users list...
-          </p>
-          <Button onClick={handleSuccessModalClose} variant="primary" className="w-full">
-            View Users
-          </Button>
-        </div>
-      </Modal>
     </div>
   );
 }

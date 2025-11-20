@@ -6,33 +6,38 @@ import { Card, CardHeader, CardBody, CardFooter, Button } from '@/components/ui'
 import { authApi, ApiClientError } from '@/lib/api';
 import { User } from '@/lib/types';
 
-interface UsersListClientProps {
-  initialUsers: User[];
-}
-
-export default function UsersListClient({ initialUsers }: UsersListClientProps) {
+export default function UsersListClient() {
   const router = useRouter();
-  const [users, setUsers] = React.useState<User[]>(initialUsers);
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string>('');
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    setError('');
-
+  const fetchUsers = React.useCallback(async () => {
     try {
       const freshUsers = await authApi.getAllUsers();
       setUsers(freshUsers);
+      setError('');
     } catch (error) {
       if (error instanceof ApiClientError) {
         setError(error.message);
       } else {
-        setError('Failed to refresh users list');
+        setError('Failed to load users');
       }
     } finally {
-      setIsRefreshing(false);
+      setIsLoading(false);
     }
+  }, []);
+
+  React.useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchUsers();
+    setIsRefreshing(false);
   };
 
   const filteredUsers = React.useMemo(() => {
@@ -45,6 +50,30 @@ export default function UsersListClient({ initialUsers }: UsersListClientProps) 
         user.email.toLowerCase().includes(query)
     );
   }, [users, searchQuery]);
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse bg-white rounded-lg shadow-md p-6"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="rounded-full bg-gray-300 h-12 w-12" />
+              <div className="flex-1 space-y-3">
+                <div className="h-4 bg-gray-300 rounded w-3/4" />
+                <div className="h-3 bg-gray-300 rounded w-1/2" />
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              <div className="h-3 bg-gray-300 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

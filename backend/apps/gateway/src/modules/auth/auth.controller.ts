@@ -6,6 +6,7 @@ import {
   Param,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,9 +14,18 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { CreateUserDto, UserResponseDto } from '@common/dto';
+import {
+  CreateUserDto,
+  AuthResponseDto,
+  LoginDto,
+  RefreshTokenDto,
+  TokensDto,
+  UserResponseDto,
+} from '@common/dto';
+import { JwtAuthGuard } from '@common/guards';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -29,7 +39,7 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'User registered successfully',
-    type: UserResponseDto,
+    type: AuthResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,
@@ -39,11 +49,51 @@ export class AuthController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data',
   })
-  async register(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  async register(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<AuthResponseDto> {
     return this.authService.register(createUserDto);
   }
 
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login user' })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User logged in successfully',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid credentials',
+  })
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+    return this.authService.login(loginDto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Token refreshed successfully',
+    type: TokensDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Invalid or expired refresh token',
+  })
+  async refreshToken(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<TokensDto> {
+    return this.authService.refreshToken(refreshTokenDto);
+  }
+
   @Get('users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({
@@ -51,11 +101,17 @@ export class AuthController {
     description: 'List of all users',
     type: [UserResponseDto],
   })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
+  })
   async findAll(): Promise<UserResponseDto[]> {
     return this.authService.findAll();
   }
 
   @Get('users/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiParam({
@@ -71,6 +127,10 @@ export class AuthController {
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'User not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'Unauthorized',
   })
   async findById(@Param('id') id: string): Promise<UserResponseDto> {
     return this.authService.findById(id);
