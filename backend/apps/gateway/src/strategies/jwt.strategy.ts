@@ -2,9 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '@common/entities';
+import { ERROR_MESSAGES } from '@common/constants/error-messages';
 
 export interface JwtPayload {
   sub: string;
@@ -14,28 +12,26 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private readonly configService: ConfigService,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-  ) {
+  constructor(private readonly configService: ConfigService) {
+    const secret = configService.get<string>('jwt.secret');
+    if (!secret) {
+      throw new Error('JWT secret is not configured');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('jwt.secret') || 'default-secret',
+      secretOrKey: secret,
     });
   }
 
   async validate(payload: JwtPayload) {
     if (payload.type !== 'access') {
-      throw new UnauthorizedException('Invalid token type');
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_TOKEN_TYPE);
     }
 
-    const user = await this.userModel.findById(payload.sub).exec();
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
+    // Gateway only validates token structure and signature
+    // User existence is verified by the microservice
     return {
       userId: payload.sub,
       email: payload.email,

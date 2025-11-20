@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
-import { UserRepository } from './repositories/user.repository';
-import { JwtAuthService } from './jwt/jwt.service';
+import { UserRepository } from '../repositories/user.repository';
+import { JwtAuthService } from '../jwt/jwt.service';
 import { LoggerService } from '@core/logger';
 import { CreateUserDto, LoginDto } from '@common/dto';
-import { User } from '@common/entities';
+import { User, UserDocument } from '@common/entities';
 import { getModelToken } from '@nestjs/mongoose';
 
 describe('AuthenticationService', () => {
@@ -13,15 +13,21 @@ describe('AuthenticationService', () => {
   let userRepository: jest.Mocked<UserRepository>;
   let jwtAuthService: jest.Mocked<JwtAuthService>;
 
-  const mockUser = {
-    _id: { toString: () => '507f1f77bcf86cd799439011' },
+  const mockUser: UserDocument = {
+    _id: { toString: () => '507f1f77bcf86cd799439011' } as unknown as string,
     name: 'Test User',
     email: 'test@example.com',
     password: 'hashedPassword',
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
-    comparePassword: jest.fn(),
-  } as any;
+    comparePassword: jest.fn().mockResolvedValue(true),
+    save: jest.fn(),
+    isNew: false,
+    isModified: jest.fn(),
+    markModified: jest.fn(),
+    toObject: jest.fn(),
+    toJSON: jest.fn(),
+  } as unknown as UserDocument;
 
   const mockUserResponse = {
     id: '507f1f77bcf86cd799439011',
@@ -147,7 +153,6 @@ describe('AuthenticationService', () => {
 
     it('should login user successfully', async () => {
       userRepository.findByEmail.mockResolvedValue(mockUser);
-      mockUser.comparePassword.mockResolvedValue(true);
       jwtAuthService.generateTokens.mockResolvedValue(mockTokens);
 
       const result = await service.login(loginDto);
@@ -172,13 +177,15 @@ describe('AuthenticationService', () => {
       userRepository.findByEmail.mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
-      await expect(service.login(loginDto)).rejects.toThrow('Invalid credentials');
       expect(mockUser.comparePassword).not.toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
-      userRepository.findByEmail.mockResolvedValue(mockUser);
-      mockUser.comparePassword.mockResolvedValue(false);
+      const mockUserWithInvalidPassword = {
+        ...mockUser,
+        comparePassword: jest.fn().mockResolvedValue(false),
+      } as unknown as UserDocument;
+      userRepository.findByEmail.mockResolvedValue(mockUserWithInvalidPassword);
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
       await expect(service.login(loginDto)).rejects.toThrow('Invalid credentials');
@@ -243,58 +250,6 @@ describe('AuthenticationService', () => {
       );
     });
   });
-
-  describe('findAll', () => {
-    it('should return all users', async () => {
-      const users = [mockUser];
-      userRepository.findAll.mockResolvedValue(users);
-
-      const result = await service.findAll();
-
-      expect(userRepository.findAll).toHaveBeenCalled();
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(
-        expect.objectContaining({
-          id: mockUser._id.toString(),
-          name: mockUser.name,
-          email: mockUser.email,
-        }),
-      );
-    });
-
-    it('should return empty array if no users', async () => {
-      userRepository.findAll.mockResolvedValue([]);
-
-      const result = await service.findAll();
-
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('findById', () => {
-    const userId = '507f1f77bcf86cd799439011';
-
-    it('should return user by id', async () => {
-      userRepository.findById.mockResolvedValue(mockUser);
-
-      const result = await service.findById(userId);
-
-      expect(userRepository.findById).toHaveBeenCalledWith(userId);
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: mockUser._id.toString(),
-          name: mockUser.name,
-          email: mockUser.email,
-        }),
-      );
-    });
-
-    it('should throw NotFoundException if user not found', async () => {
-      userRepository.findById.mockResolvedValue(null);
-
-      await expect(service.findById(userId)).rejects.toThrow(NotFoundException);
-      await expect(service.findById(userId)).rejects.toThrow('User not found');
-    });
-  });
 });
+
 

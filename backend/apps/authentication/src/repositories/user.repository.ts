@@ -1,22 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { User, UserDocument } from '@common/entities';
+import type { UserModel } from '@common/entities';
 import { CreateUserDto } from '@common/dto';
+import { ERROR_MESSAGES } from '@common/constants/error-messages';
 
 @Injectable()
 export class UserRepository {
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(User.name) private readonly userModel: UserModel,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserDocument> {
     try {
       const user = new this.userModel(createUserDto);
       return await user.save();
-    } catch (error: any) {
-      if (error.code === 11000) {
-        throw new Error('Email already exists');
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
+        throw new Error(ERROR_MESSAGES.EMAIL_EXISTS);
       }
       throw error;
     }

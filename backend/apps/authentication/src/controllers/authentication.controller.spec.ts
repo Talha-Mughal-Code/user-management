@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthenticationController } from './authentication.controller';
-import { AuthenticationService } from './authentication.service';
-import { UserRepository } from './repositories/user.repository';
-import { JwtAuthService } from './jwt/jwt.service';
+import { AuthenticationService } from '../services/authentication.service';
+import { UserRepository } from '../repositories/user.repository';
+import { JwtAuthService } from '../jwt/jwt.service';
 import { LoggerService } from '@core/logger';
 import { User } from '@common/entities';
 import { getModelToken } from '@nestjs/mongoose';

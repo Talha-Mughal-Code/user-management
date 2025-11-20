@@ -3,8 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthenticationController } from './authentication.controller';
-import { AuthenticationService } from './authentication.service';
+import { AuthenticationController, UserController } from './controllers';
+import { AuthenticationService, UserService } from './services';
 import { User, UserSchema } from '@common/entities';
 import { UserRepository } from './repositories/user.repository';
 import { JwtAuthService } from './jwt/jwt.service';
@@ -25,9 +25,10 @@ import { LoggerModule } from '@core/logger';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({}),
   ],
-  controllers: [AuthenticationController],
+  controllers: [AuthenticationController, UserController],
   providers: [
     AuthenticationService,
+    UserService,
     UserRepository,
     JwtAuthService,
     JwtStrategy,

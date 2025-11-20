@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService as NestJwtService } from '@nestjs/jwt';
+import { JwtService as NestJwtService, JwtSignOptions } from '@nestjs/jwt';
 
 export interface JwtPayload {
   sub: string;
@@ -37,13 +37,17 @@ export class JwtAuthService {
       type: 'access' as const,
     };
 
-    const secret = this.configService.get<string>('jwt.secret') || 'default-secret-key';
+    const secret = this.configService.get<string>('jwt.secret');
     const expiresIn = this.configService.get<string>('jwt.accessTokenExpiry') || '15m';
 
-    return this.jwtService.signAsync(payload as any, {
+    if (!secret) {
+      throw new Error('JWT secret is not configured');
+    }
+
+    return this.jwtService.signAsync(payload, {
       secret,
-      expiresIn: expiresIn as any,
-    });
+      expiresIn,
+    } as JwtSignOptions);
   }
 
   private async generateRefreshToken(
@@ -56,17 +60,25 @@ export class JwtAuthService {
       type: 'refresh' as const,
     };
 
-    const secret = this.configService.get<string>('jwt.secret') || 'default-secret-key';
+    const secret = this.configService.get<string>('jwt.secret');
     const expiresIn = this.configService.get<string>('jwt.refreshTokenExpiry') || '7d';
 
-    return this.jwtService.signAsync(payload as any, {
+    if (!secret) {
+      throw new Error('JWT secret is not configured');
+    }
+
+    return this.jwtService.signAsync(payload, {
       secret,
-      expiresIn: expiresIn as any,
-    });
+      expiresIn,
+    } as JwtSignOptions);
   }
 
   async verifyToken(token: string): Promise<JwtPayload> {
-    const secret = this.configService.get<string>('jwt.secret') || 'default-secret-key';
+    const secret = this.configService.get<string>('jwt.secret');
+    
+    if (!secret) {
+      throw new Error('JWT secret is not configured');
+    }
     
     return this.jwtService.verifyAsync<JwtPayload>(token, {
       secret,

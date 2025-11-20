@@ -1,12 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
-import { GatewayService } from './gateway.service';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
+@ApiTags('Health')
 @Controller()
 export class GatewayController {
-  constructor(private readonly gatewayService: GatewayService) {}
-
-  @Get()
-  getHello(): string {
-    return this.gatewayService.getHello();
+  @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint' })
+  healthCheck() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'API Gateway',
+    };
   }
 }

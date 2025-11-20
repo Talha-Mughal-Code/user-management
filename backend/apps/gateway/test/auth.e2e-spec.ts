@@ -1,8 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, ExecutionContext, CanActivate } from '@nestjs/common';
 import request from 'supertest';
 import { GatewayModule } from '../src/gateway.module';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { Observable } from 'rxjs';
+class MockThrottlerGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+    return true;
+  }
+}
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication;
@@ -11,12 +18,14 @@ describe('AuthController (e2e)', () => {
   let userId: string;
 
   beforeAll(async () => {
-    // Note: For full E2E tests, ensure the Authentication microservice is running
-    // on the configured port (default: 3001) before running these tests
-    
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [GatewayModule],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useClass(MockThrottlerGuard)
+      .overrideProvider(APP_GUARD)
+      .useClass(MockThrottlerGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
@@ -38,7 +47,7 @@ describe('AuthController (e2e)', () => {
       const userData = {
         name: 'Test User',
         email: `test-${Date.now()}@example.com`,
-        password: 'test123456',
+        password: 'Test123!@#',
       };
 
       return request(app.getHttpServer())
@@ -46,17 +55,18 @@ describe('AuthController (e2e)', () => {
         .send(userData)
         .expect(201)
         .expect((res) => {
-          expect(res.body).toHaveProperty('user');
-          expect(res.body).toHaveProperty('tokens');
-          expect(res.body.user).toHaveProperty('id');
-          expect(res.body.user).toHaveProperty('name', userData.name);
-          expect(res.body.user).toHaveProperty('email', userData.email);
-          expect(res.body.tokens).toHaveProperty('accessToken');
-          expect(res.body.tokens).toHaveProperty('refreshToken');
+          const body = res.body.data || res.body;
+          expect(body).toHaveProperty('user');
+          expect(body).toHaveProperty('tokens');
+          expect(body.user).toHaveProperty('id');
+          expect(body.user).toHaveProperty('name', userData.name);
+          expect(body.user).toHaveProperty('email', userData.email);
+          expect(body.tokens).toHaveProperty('accessToken');
+          expect(body.tokens).toHaveProperty('refreshToken');
 
-          accessToken = res.body.tokens.accessToken;
-          refreshToken = res.body.tokens.refreshToken;
-          userId = res.body.user.id;
+          accessToken = body.tokens.accessToken;
+          refreshToken = body.tokens.refreshToken;
+          userId = body.user.id;
         });
     });
 
@@ -64,7 +74,7 @@ describe('AuthController (e2e)', () => {
       const userData = {
         name: 'Test User',
         email: `duplicate-${Date.now()}@example.com`,
-        password: 'test123456',
+        password: 'Test123!@#',
       };
 
       await request(app.getHttpServer())
@@ -77,7 +87,8 @@ describe('AuthController (e2e)', () => {
         .send(userData)
         .expect(409)
         .expect((res) => {
-          expect(res.body.message).toContain('already exists');
+          const message = res.body.message || res.body.error?.message || res.body.error;
+          expect(message).toContain('already exists');
         });
     });
 
@@ -87,7 +98,18 @@ describe('AuthController (e2e)', () => {
         .send({
           name: 'Test',
           email: 'invalid-email',
-          password: '123', // Too short
+          password: '123',
+        })
+        .expect(400);
+    });
+
+    it('should fail with 400 if password does not meet complexity requirements', () => {
+      return request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'Test User',
+          email: `test-${Date.now()}@example.com`,
+          password: 'simplepassword',
         })
         .expect(400);
     });
@@ -95,7 +117,7 @@ describe('AuthController (e2e)', () => {
 
   describe('POST /auth/login', () => {
     const testEmail = `login-test-${Date.now()}@example.com`;
-    const testPassword = 'test123456';
+    const testPassword = 'Test123!@#';
 
     beforeAll(async () => {
       await request(app.getHttpServer()).post('/auth/register').send({
@@ -114,10 +136,11 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body).toHaveProperty('user');
-          expect(res.body).toHaveProperty('tokens');
-          expect(res.body.tokens).toHaveProperty('accessToken');
-          expect(res.body.tokens).toHaveProperty('refreshToken');
+          const body = res.body.data || res.body;
+          expect(body).toHaveProperty('user');
+          expect(body).toHaveProperty('tokens');
+          expect(body.tokens).toHaveProperty('accessToken');
+          expect(body.tokens).toHaveProperty('refreshToken');
         });
     });
 
@@ -156,13 +179,19 @@ describe('AuthController (e2e)', () => {
     let testRefreshToken: string;
 
     beforeAll(async () => {
-      const response = await request(app.getHttpServer()).post('/auth/register').send({
-        name: 'Refresh Test User',
-        email: `refresh-test-${Date.now()}@example.com`,
-        password: 'test123456',
-      });
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'Refresh Test User',
+          email: `refresh-test-${Date.now()}@example.com`,
+          password: 'Test123!@#',
+        })
+        .expect(201);
 
-      testRefreshToken = response.body.tokens.refreshToken;
+      const body = response.body.data || response.body;
+      expect(body).toBeDefined();
+      expect(body.tokens).toBeDefined();
+      testRefreshToken = body.tokens.refreshToken;
     });
 
     it('should refresh tokens successfully', () => {
@@ -173,10 +202,11 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200)
         .expect((res) => {
-          expect(res.body).toHaveProperty('accessToken');
-          expect(res.body).toHaveProperty('refreshToken');
-          expect(res.body.accessToken).toBeDefined();
-          expect(res.body.refreshToken).toBeDefined();
+          const body = res.body.data || res.body;
+          expect(body).toHaveProperty('accessToken');
+          expect(body).toHaveProperty('refreshToken');
+          expect(body.accessToken).toBeDefined();
+          expect(body.refreshToken).toBeDefined();
         });
     });
 
@@ -210,24 +240,31 @@ describe('AuthController (e2e)', () => {
     });
 
     it('should return users with valid token', async () => {
-      const response = await request(app.getHttpServer()).post('/auth/register').send({
-        name: 'Protected Route Test',
-        email: `protected-${Date.now()}@example.com`,
-        password: 'test123456',
-      });
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'Protected Route Test',
+          email: `protected-${Date.now()}@example.com`,
+          password: 'Test123!@#',
+        })
+        .expect(201);
 
-      const token = response.body.tokens.accessToken;
+      const body = response.body.data || response.body;
+      expect(body).toBeDefined();
+      expect(body.tokens).toBeDefined();
+      const token = body.tokens.accessToken;
 
       return request(app.getHttpServer())
         .get('/auth/users')
         .set('Authorization', `Bearer ${token}`)
         .expect(200)
         .expect((res) => {
-          expect(Array.isArray(res.body)).toBe(true);
-          expect(res.body.length).toBeGreaterThan(0);
-          expect(res.body[0]).toHaveProperty('id');
-          expect(res.body[0]).toHaveProperty('name');
-          expect(res.body[0]).toHaveProperty('email');
+          const responseBody = res.body.data || res.body;
+          expect(Array.isArray(responseBody)).toBe(true);
+          expect(responseBody.length).toBeGreaterThan(0);
+          expect(responseBody[0]).toHaveProperty('id');
+          expect(responseBody[0]).toHaveProperty('name');
+          expect(responseBody[0]).toHaveProperty('email');
         });
     });
   });
@@ -237,14 +274,21 @@ describe('AuthController (e2e)', () => {
     let testToken: string;
 
     beforeAll(async () => {
-      const response = await request(app.getHttpServer()).post('/auth/register').send({
-        name: 'Single User Test',
-        email: `single-user-${Date.now()}@example.com`,
-        password: 'test123456',
-      });
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          name: 'Single User Test',
+          email: `single-user-${Date.now()}@example.com`,
+          password: 'Test123!@#',
+        })
+        .expect(201);
 
-      testUserId = response.body.user.id;
-      testToken = response.body.tokens.accessToken;
+      const body = response.body.data || response.body;
+      expect(body).toBeDefined();
+      expect(body.user).toBeDefined();
+      expect(body.tokens).toBeDefined();
+      testUserId = body.user.id;
+      testToken = body.tokens.accessToken;
     });
 
     it('should return 401 without authorization token', () => {
@@ -259,9 +303,10 @@ describe('AuthController (e2e)', () => {
         .set('Authorization', `Bearer ${testToken}`)
         .expect(200)
         .expect((res) => {
-          expect(res.body).toHaveProperty('id', testUserId);
-          expect(res.body).toHaveProperty('name');
-          expect(res.body).toHaveProperty('email');
+          const body = res.body.data || res.body;
+          expect(body).toHaveProperty('id', testUserId);
+          expect(body).toHaveProperty('name');
+          expect(body).toHaveProperty('email');
         });
     });
 
@@ -277,9 +322,8 @@ describe('AuthController (e2e)', () => {
   describe('Complete Auth Flow', () => {
     it('should complete full flow: register → login → get users → refresh → get users', async () => {
       const uniqueEmail = `flow-test-${Date.now()}@example.com`;
-      const password = 'test123456';
+      const password = 'Test123!@#';
 
-      // Step 1: Register
       const registerResponse = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
@@ -289,10 +333,10 @@ describe('AuthController (e2e)', () => {
         })
         .expect(201);
 
-      const initialAccessToken = registerResponse.body.tokens.accessToken;
-      const initialRefreshToken = registerResponse.body.tokens.refreshToken;
+      const registerBody = registerResponse.body.data || registerResponse.body;
+      const initialAccessToken = registerBody.tokens.accessToken;
+      const initialRefreshToken = registerBody.tokens.refreshToken;
 
-      // Step 2: Login
       const loginResponse = await request(app.getHttpServer())
         .post('/auth/login')
         .send({
@@ -301,15 +345,14 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200);
 
-      expect(loginResponse.body.tokens.accessToken).toBeDefined();
+      const loginBody = loginResponse.body.data || loginResponse.body;
+      expect(loginBody.tokens.accessToken).toBeDefined();
 
-      // Step 3: Get users with access token
       await request(app.getHttpServer())
         .get('/auth/users')
         .set('Authorization', `Bearer ${initialAccessToken}`)
         .expect(200);
 
-      // Step 4: Refresh token
       const refreshResponse = await request(app.getHttpServer())
         .post('/auth/refresh')
         .send({
@@ -317,9 +360,9 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200);
 
-      const newAccessToken = refreshResponse.body.accessToken;
+      const refreshBody = refreshResponse.body.data || refreshResponse.body;
+      const newAccessToken = refreshBody.accessToken;
 
-      // Step 5: Get users with new access token
       await request(app.getHttpServer())
         .get('/auth/users')
         .set('Authorization', `Bearer ${newAccessToken}`)
@@ -327,4 +370,3 @@ describe('AuthController (e2e)', () => {
     });
   });
 });
-

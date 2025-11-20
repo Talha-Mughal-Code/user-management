@@ -1,6 +1,6 @@
 # User Management - Full Stack Application
 
-A production-ready full-stack application demonstrating modern web development practices with NestJS microservices backend and Next.js frontend.
+A full-stack application demonstrating modern web development practices with NestJS microservices backend and Next.js frontend.
 
 ## Project Overview
 
@@ -11,47 +11,47 @@ This project consists of two main parts:
 ## Features
 
 ### Backend (NestJS)
-- ✅ **Authentication & Security**
+- **Authentication & Security**
   - JWT-based authentication with access + refresh tokens
   - Password hashing with bcrypt (10 rounds)
   - JWT guards for protected routes
   - Token refresh mechanism
   - Secure token validation
-- ✅ **Architecture**
+- **Architecture**
   - Microservices architecture with TCP communication
   - MongoDB with Mongoose ORM
   - Repository pattern for data access
   - MVC pattern per feature
   - Global exception filters and interceptors
-- ✅ **Logging & Monitoring**
+- **Logging & Monitoring**
   - Centralized Winston-based logging
   - Structured JSON logs with context
   - Request/response logging
   - Error tracking with stack traces
   - Environment-based log levels
   - Sensitive data redaction
-- ✅ **Testing**
+- **Testing**
   - E2E tests for complete auth flows
   - Integration tests for protected routes
   - Comprehensive error scenario coverage
   - Test coverage reporting
-- ✅ **API & Documentation**
+- **API & Documentation**
   - RESTful API with Swagger/OpenAPI
   - Email uniqueness validation
   - Request/response transformation
-- ✅ **DevOps**
+- **DevOps**
   - Docker and docker-compose setup
   - Production-ready configuration
 
 ### Frontend (Next.js)
-- ✅ **Authentication**
+- **Authentication**
   - JWT-based authentication flow
   - Login/logout functionality
   - Protected routes with auto-redirect
   - Automatic token refresh on expiry
   - Secure token storage
   - Auth context provider
-- ✅ **UI Components**
+- **UI Components**
   - 5 reusable UI components (Button, InputField, Modal, Tabs, Card)
   - Full TypeScript with type-safe API client
   - Form validation with Zod
@@ -62,24 +62,6 @@ This project consists of two main parts:
   - Search and filter functionality
   - Modern UI with TailwindCSS
 
-## Architecture
-
-```
-user-management/
-├── backend/              # NestJS Monorepo
-│   ├── apps/
-│   │   ├── gateway/     # HTTP API Gateway (Port 3000)
-│   │   └── authentication/  # User Service (TCP Port 3001)
-│   ├── common/          # Shared DTOs, filters, interceptors
-│   ├── core/           # Config, database modules
-│   └── docker-compose.yml
-│
-└── frontend/            # Next.js App
-    ├── app/            # Pages (App Router)
-    ├── components/ui/  # UI Component Library
-    ├── lib/           # API client, types, validations
-    └── public/        # Static assets
-```
 
 ## Tech Stack
 
@@ -168,116 +150,6 @@ echo "NEXT_PUBLIC_API_URL=http://localhost:3000" > .env.local
 yarn dev
 ```
 
-## API Endpoints
-
-### Gateway Service (http://localhost:3000)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | /auth/register | Register a new user | No |
-| POST | /auth/login | Login with credentials | No |
-| POST | /auth/refresh | Refresh access token | No |
-| GET | /auth/users | Get all users | Yes |
-| GET | /auth/users/:id | Get user by ID | Yes |
-
-### Example Requests
-
-```bash
-# Register a new user
-curl -X POST http://localhost:3000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "SecurePass123"
-  }'
-
-# Response includes JWT tokens
-# {
-#   "user": { "id": "...", "name": "John Doe", "email": "john@example.com", "createdAt": "..." },
-#   "tokens": { "accessToken": "eyJhbG...", "refreshToken": "eyJhbG..." }
-# }
-
-# Login
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "SecurePass123"
-  }'
-
-# Get all users (requires authentication)
-curl http://localhost:3000/auth/users \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Refresh token
-curl -X POST http://localhost:3000/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{
-    "refreshToken": "YOUR_REFRESH_TOKEN"
-  }'
-```
-
-## Project Structure
-
-### Backend Structure
-
-```
-backend/
-├── apps/
-│   ├── gateway/
-│   │   └── src/
-│   │       ├── modules/auth/     # Auth endpoints
-│   │       └── main.ts           # HTTP server setup
-│   └── authentication/
-│       └── src/
-│           ├── entities/         # Mongoose schemas
-│           ├── repositories/     # Data access layer
-│           ├── authentication.service.ts
-│           └── main.ts           # TCP microservice setup
-├── common/
-│   ├── dto/                      # Data Transfer Objects
-│   ├── interfaces/               # TypeScript interfaces
-│   ├── filters/                  # Exception filters
-│   └── interceptors/             # Request/response interceptors
-└── core/
-    ├── config/                   # Configuration files
-    └── database/                 # Database module
-```
-
-### Frontend Structure
-
-```
-frontend/
-├── app/
-│   ├── page.tsx                 # Home page
-│   ├── register/                # Registration page
-│   └── users/                   # Users list page
-├── components/
-│   └── ui/                      # UI component library
-├── lib/
-│   ├── api/                     # API client
-│   ├── types/                   # TypeScript types
-│   ├── validations/             # Zod schemas
-│   └── utils.ts                 # Utility functions
-└── public/                      # Static assets
-```
-
-## Design Patterns
-
-### Backend
-- **Repository Pattern**: Abstracts data access logic
-- **DTO Pattern**: Request validation and transformation
-- **Microservices Pattern**: Service decomposition via TCP
-- **Decorator Pattern**: Interceptors and filters
-- **MVC Pattern**: Controller → Service → Repository
-
-### Frontend
-- **Compound Components**: Card with composable slots
-- **Controlled/Uncontrolled**: Flexible component APIs
-- **Server/Client Composition**: Optimal data fetching
-- **Custom Hooks**: Reusable stateful logic
-
 ## Testing
 
 ### Backend Tests
@@ -288,11 +160,6 @@ cd backend
 
 yarn test
 
-yarn test:watch
-
-yarn test:cov
-
-yarn test authentication.service.spec
 ```
 
 **Unit Test Coverage**:
@@ -306,7 +173,6 @@ cd backend
 
 yarn test:e2e
 
-yarn test:e2e auth.e2e-spec.ts
 ```
 
 **E2E Test Coverage**:
@@ -316,44 +182,6 @@ yarn test:e2e auth.e2e-spec.ts
 - ✅ Error handling (validation, unauthorized, not found)
 - ✅ Integration with microservices
 
-**Setup for E2E Tests**:
-1. Ensure MongoDB is running (or use Docker Compose)
-2. Start authentication microservice: `yarn start:authentication`
-3. Run E2E tests in separate terminal: `yarn test:e2e`
-
-**Test Files**:
-- `apps/authentication/src/authentication.service.spec.ts` - Unit tests
-- `apps/authentication/src/jwt/jwt.service.spec.ts` - JWT unit tests
-- `apps/gateway/test/auth.e2e-spec.ts` - Complete auth flow E2E tests
-
-### Frontend Tests
-```bash
-cd frontend
-yarn lint             # ESLint
-yarn build            # Type checking
-```
-
-## Development Workflow
-
-### Commit Convention
-
-This project follows conventional commits:
-
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `chore:` Maintenance tasks
-- `refactor:` Code refactoring
-
-### Git History
-
-View the incremental development commits:
-
-```bash
-git log --oneline
-```
-
-Each commit represents a complete, testable unit of work.
 
 ## Docker Support
 
@@ -387,7 +215,7 @@ AUTH_SERVICE_PORT=3001
 GATEWAY_PORT=3000
 
 # Security
-JWT_SECRET=your-secret-key-change-in-production
+JWT_SECRET=your-secret-key
 JWT_ACCESS_EXPIRY=15m
 JWT_REFRESH_EXPIRY=7d
 
@@ -408,128 +236,6 @@ Create `.env.local` file in frontend/:
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
-## Production Deployment
-
-### Backend
-
-```bash
-cd backend
-yarn build
-yarn start:prod
-```
-
-### Frontend
-
-```bash
-cd frontend
-yarn build
-yarn start
-```
-
-## Troubleshooting
-
-### Backend won't start
-- Ensure MongoDB is running
-- Check ports 3000 and 3001 are available
-- Verify environment variables are set
-
-### Frontend can't connect to backend
-- Verify backend is running on port 3000
-- Check NEXT_PUBLIC_API_URL in .env.local
-- Ensure CORS is configured correctly
-
-### MongoDB connection issues
-- Check MongoDB is running: `mongosh`
-- Verify connection string in .env
-- Ensure MongoDB version is 7+
-
-## Performance Considerations
-
-### Backend
-- MongoDB indexes on email field
-- TCP for fast inter-service communication
-- Response transformation interceptor
-- Connection pooling
-
-### Frontend
-- Server-side rendering for initial load
-- Client-side state management for interactivity
-- Lazy loading for tab content
-- Optimistic UI updates
-
-## Security Features
-
-### Backend
-- **Authentication**
-  - JWT-based authentication (access + refresh tokens)
-  - Secure token generation and validation
-  - Password hashing with bcrypt (10 rounds)
-  - Protected routes with JWT guards
-  - Token refresh mechanism
-- **API Security**
-  - Global validation pipes
-  - CORS configuration
-  - Exception filters for error handling
-  - Rate limiting ready
-- **Logging**
-  - Automatic sensitive data redaction (passwords, tokens)
-  - Structured error logging with stack traces
-  - Request/response logging
-
-### Frontend
-- **Authentication**
-  - Secure token storage (localStorage)
-  - Automatic token refresh on 401
-  - Protected route guards
-  - Auto-redirect to login
-- **Validation & Safety**
-  - Client-side validation before API calls
-  - XSS protection via React
-  - Type-safe API client
-  - Error boundary implementation
-
-## Testing
-
-### Quick Start
-
-**Backend Tests**:
-```bash
-cd backend
-
-yarn test
-
-yarn start:authentication  # Terminal 1
-yarn test:e2e             # Terminal 2
-
-yarn test:cov
-```
-
-**Test Coverage**:
-- ✅ Unit tests: AuthenticationService, JwtAuthService
-- ✅ E2E tests: Complete auth flow, protected routes, error handling
-- ✅ Integration tests: Register → Login → Users → Refresh flow
-
-
-## Key Implementation Highlights
-
-### JWT Authentication Flow
-1. User registers → receives JWT tokens
-2. User logs in → receives JWT tokens
-3. Frontend stores tokens in localStorage
-4. API calls include token in Authorization header
-5. Token expires → automatic refresh using refresh token
-6. Refresh fails → redirect to login
-
-### Logging System
-- **Console Logs** (Development): Colored, structured output
-- **File Logs** (Production): JSON format for log aggregation
-- **Request Logging**: All HTTP requests with duration
-- **Error Logging**: Full stack traces and context
-- **Sensitive Data**: Automatically redacted
-
-## License
-
-UNLICENSED
 
 ## Support
 

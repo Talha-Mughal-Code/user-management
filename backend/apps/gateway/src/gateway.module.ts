@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { GatewayController } from './gateway.controller';
-import { GatewayService } from './gateway.service';
 import { AuthModule } from './modules/auth/auth.module';
 import {
   microservicesConfig,
@@ -24,13 +24,22 @@ import {
       isGlobal: true,
       load: [microservicesConfig, databaseConfig, jwtConfig, loggerConfig],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     DatabaseModule,
     LoggerModule,
     AuthModule,
   ],
   controllers: [GatewayController],
   providers: [
-    GatewayService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: RequestLoggingInterceptor,

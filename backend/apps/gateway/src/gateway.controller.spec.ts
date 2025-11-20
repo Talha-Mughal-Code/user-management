@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GatewayController } from './gateway.controller';
-import { GatewayService } from './gateway.service';
 
 describe('GatewayController', () => {
   let gatewayController: GatewayController;
@@ -8,15 +7,17 @@ describe('GatewayController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [GatewayController],
-      providers: [GatewayService],
     }).compile();
 
     gatewayController = app.get<GatewayController>(GatewayController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(gatewayController.getHello()).toBe('Hello World!');
+  describe('healthCheck', () => {
+    it('should return health status', () => {
+      const result = gatewayController.healthCheck();
+      expect(result).toHaveProperty('status', 'ok');
+      expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty('service', 'API Gateway');
     });
   });
 });
