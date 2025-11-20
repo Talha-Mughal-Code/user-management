@@ -7,11 +7,27 @@ A production-ready NestJS monorepo implementing microservices architecture with 
 ```
 backend/
 ├── apps/
-│   ├── gateway/          # HTTP API Gateway (Port 3000)
-│   └── authentication/   # User Authentication Service (TCP Port 3001)
-├── common/              # Shared DTOs, interfaces
-├── core/               # Core modules (config, database)
-└── docker-compose.yml  # Docker orchestration
+│   ├── gateway/              # HTTP API Gateway (Port 3000)
+│   │   ├── src/
+│   │   │   ├── modules/
+│   │   │   │   └── auth/    # Auth endpoints and TCP client
+│   │   │   └── main.ts      # Gateway bootstrap with Swagger
+│   │   └── ...
+│   └── authentication/       # User Authentication Service (TCP Port 3001)
+│       ├── src/
+│       │   ├── entities/    # Mongoose schemas
+│       │   ├── repositories/ # Data access layer
+│       │   └── main.ts      # Microservice bootstrap
+│       └── ...
+├── common/                   # Shared across services
+│   ├── dto/                 # Data Transfer Objects
+│   ├── interfaces/          # TypeScript interfaces
+│   ├── filters/             # Exception filters
+│   └── interceptors/        # Request/response interceptors
+├── core/                     # Core infrastructure
+│   ├── config/              # Configuration files
+│   └── database/            # Database module
+└── docker-compose.yml        # Docker orchestration
 ```
 
 ## Tech Stack
@@ -100,13 +116,22 @@ The Gateway service exposes the following endpoints on `http://localhost:3000`:
 
 ### Authentication
 
-- `POST /auth/register` - Register a new user
-- `GET /auth/users` - Get all users
+- **POST /auth/register** - Register a new user
+  ```json
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "SecurePass123"
+  }
+  ```
+
+- **GET /auth/users** - Get all users
+- **GET /auth/users/:id** - Get user by ID
 
 ### Swagger Documentation
 
 Once the gateway is running, visit:
-- `http://localhost:3000/api` - Interactive API documentation
+- `http://localhost:3000/api` - Interactive API documentation with live testing
 
 ## Project Structure Details
 
@@ -155,14 +180,28 @@ Services communicate via TCP using message patterns:
 3. Test endpoints via Swagger UI or HTTP client
 4. Run linter before committing: `yarn lint`
 
-## Next Steps
+## Features Implemented
 
-- [ ] Implement authentication service business logic
-- [ ] Implement gateway endpoints
-- [ ] Add comprehensive error handling
-- [ ] Add request/response interceptors
-- [ ] Configure global validation pipes
-- [ ] Add unit and e2e tests
+- ✅ NestJS monorepo with gateway and authentication apps
+- ✅ TCP microservices communication
+- ✅ MongoDB integration with Mongoose
+- ✅ User registration with password hashing (bcrypt)
+- ✅ Email uniqueness validation
+- ✅ Repository pattern for data access
+- ✅ Global exception filters (HTTP and RPC)
+- ✅ Logging and transform interceptors
+- ✅ Global validation pipes
+- ✅ Swagger/OpenAPI documentation
+- ✅ Docker and docker-compose setup
+- ✅ CORS configuration for frontend
+
+## Design Patterns Used
+
+- **Repository Pattern**: Abstracts data access logic
+- **DTO Pattern**: Request validation and transformation
+- **Microservices Pattern**: Service decomposition via TCP
+- **Decorator Pattern**: Interceptors and filters
+- **Dependency Injection**: NestJS IoC container
 
 ## License
 
