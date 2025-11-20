@@ -3,6 +3,7 @@ import { ConflictException, UnauthorizedException, NotFoundException } from '@ne
 import { AuthenticationService } from './authentication.service';
 import { UserRepository } from './repositories/user.repository';
 import { JwtAuthService } from './jwt/jwt.service';
+import { LoggerService } from '@core/logger';
 import { CreateUserDto, LoginDto } from '@common/dto';
 import { User } from '@common/entities';
 import { getModelToken } from '@nestjs/mongoose';
@@ -48,6 +49,16 @@ describe('AuthenticationService', () => {
       verifyToken: jest.fn(),
     };
 
+    const mockLoggerService = {
+      setContext: jest.fn(),
+      log: jest.fn(),
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      verbose: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthenticationService,
@@ -58,6 +69,10 @@ describe('AuthenticationService', () => {
         {
           provide: JwtAuthService,
           useValue: mockJwtAuthService,
+        },
+        {
+          provide: LoggerService,
+          useValue: mockLoggerService,
         },
         {
           provide: getModelToken(User.name),
@@ -204,7 +219,9 @@ describe('AuthenticationService', () => {
       });
 
       await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow(UnauthorizedException);
-      await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow('Invalid token type');
+      await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow(
+        'Invalid or expired refresh token',
+      );
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
@@ -212,7 +229,9 @@ describe('AuthenticationService', () => {
       userRepository.findById.mockResolvedValue(null);
 
       await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow(UnauthorizedException);
-      await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow('User not found');
+      await expect(service.refreshToken(refreshTokenDto)).rejects.toThrow(
+        'Invalid or expired refresh token',
+      );
     });
 
     it('should throw UnauthorizedException if token verification fails', async () => {

@@ -142,6 +142,12 @@ export class AuthService {
         error: error.message,
         stack: error.stack,
       });
+      if (error.statusCode || error.status) {
+        throw new HttpException(
+          error.message || 'An error occurred',
+          error.statusCode || error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
       throw error;
     }
   }
