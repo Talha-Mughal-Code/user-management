@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AuthenticationModule } from './authentication.module';
+import { RpcExceptionFilterImpl } from '@common/filters';
 
 async function bootstrap() {
   const logger = new Logger('AuthenticationService');
@@ -19,6 +20,10 @@ async function bootstrap() {
     },
   );
 
+  // Global exception filter for RPC
+  app.useGlobalFilters(new RpcExceptionFilterImpl());
+
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

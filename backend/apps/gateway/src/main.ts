@@ -2,6 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { GatewayModule } from './gateway.module';
+import {
+  AllExceptionsFilter,
+  HttpExceptionFilter,
+} from '@common/filters';
+import {
+  LoggingInterceptor,
+  TransformInterceptor,
+} from '@common/interceptors';
 
 async function bootstrap() {
   const logger = new Logger('Gateway');
@@ -12,6 +20,18 @@ async function bootstrap() {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
     credentials: true,
   });
+
+  // Global exception filters
+  app.useGlobalFilters(
+    new AllExceptionsFilter(),
+    new HttpExceptionFilter(),
+  );
+
+  // Global interceptors
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new TransformInterceptor(),
+  );
 
   // Global validation pipe
   app.useGlobalPipes(
