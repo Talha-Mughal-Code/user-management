@@ -15,25 +15,21 @@ async function bootstrap() {
   const logger = new Logger('Gateway');
   const app = await NestFactory.create(GatewayModule);
 
-  // Enable CORS for frontend integration
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
     credentials: true,
   });
 
-  // Global exception filters
   app.useGlobalFilters(
     new AllExceptionsFilter(),
     new HttpExceptionFilter(),
   );
 
-  // Global interceptors
   app.useGlobalInterceptors(
     new LoggingInterceptor(),
     new TransformInterceptor(),
   );
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -42,7 +38,6 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger documentation setup
   const config = new DocumentBuilder()
     .setTitle('User Management API')
     .setDescription('API Gateway for User Management System')
